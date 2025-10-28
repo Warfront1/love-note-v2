@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Love Note</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #1a1528;
+            --panel: #241b3a;
+            --panel-2: #2d214b;
+            --text: #f6ecff;
+            --muted: #cbb6ff;
+            --accent: #ff79c6;
+            --accent-2: #ffb3d6;
+            --glow: rgba(255, 121, 198, 0.35);
+            --success: #7cf7d4;
+            --danger: #ff9aa2;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background: radial-gradient(1200px 800px at 70% 10%, #2b2147, var(--bg));
+            color: var(--text);
+            overflow: hidden;
+        }
+        .scene {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+        .card {
+            position: relative;
+            width: min(680px, 92vw);
+            min-height: 360px;
+            background: linear-gradient(180deg, var(--panel), var(--panel-2));
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 18px;
+            box-shadow:
+                    0 20px 60px rgba(0,0,0,.35),
+                    0 0 0 1px rgba(255,255,255,.02) inset;
+            overflow: hidden;
+        }
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            background: radial-gradient(600px 220px at 20% -10%, var(--glow), transparent 60%),
+            radial-gradient(500px 260px at 120% 120%, rgba(124, 247, 212, .18), transparent 60%);
+            pointer-events: none;
+            filter: blur(2px);
+        }
+        header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+        }
+        .heart-logo {
+            width: 28px; height: 28px; position: relative;
+            filter: drop-shadow(0 2px 4px rgba(255, 121, 198, .5));
+            animation: heartbeat 1.6s ease-in-out infinite;
+        }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.12); }
+            30% { transform: scale(0.98); }
+            45% { transform: scale(1.08); }
+            60% { transform: scale(1); }
+        }
+        .title {
+            font-weight: 800;
+            letter-spacing: .4px;
+            font-size: 1.05rem;
+            color: var(--accent-2);
+            text-shadow: 0 0 10px rgba(255,179,214,.25);
+        }
+        main {
+            padding: 24px 22px 18px;
+            display: grid;
+            gap: 16px;
+        }
+        .prompt {
+            font-size: 1.15rem;
+            line-height: 1.45;
+            color: var(--muted);
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .textbox, .choice {
+            background: rgba(255,255,255,.04);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 12px;
+            padding: 12px 14px;
+            outline: none;
+            transition: .2s ease;
+            font-size: 1rem;
+        }
+        .textbox {
+            flex: 1 1 280px;
+        }
+        .textbox:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(255,121,198,.15);
+        }
+        .btn {
+            background: linear-gradient(180deg, var(--accent), #ff5aa9);
+            color: #1d0f1a;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-weight: 800;
+            letter-spacing: .3px;
+            cursor: pointer;
+            transition: transform .05s ease, box-shadow .2s ease, filter .2s ease;
+            box-shadow: 0 8px 24px rgba(255, 90, 169, .35);
+        }
+        .btn:hover { filter: brightness(1.05); }
+        .btn:active { transform: translateY(1px) scale(.99); }
+        .choice {
+            cursor: pointer;
+            user-select: none;
+            padding: 10px 14px;
+        }
+        .choices { display: flex; gap: 8px; flex-wrap: wrap; }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: .9rem;
+            background: rgba(255,255,255,.06);
+            border: 1px dashed rgba(255,255,255,.12);
+            color: var(--muted);
+        }
+        .screen {
+            display: none;
+            animation: fade .35s ease;
+        }
+        .screen.show { display: block; }
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px 18px;
+        }
+        .note {
+            font-size: .9rem;
+            color: rgba(255,255,255,.6);
+        }
+        .status {
+            font-weight: 700;
+            color: var(--accent-2);
+            text-shadow: 0 0 8px rgba(255, 121, 198, .35);
+        }
+        /* floating decorations */
+        .floaters { pointer-events: none; }
+        .floater {
+            position: absolute;
+            opacity: .55;
+            filter: blur(.2px) drop-shadow(0 6px 10px rgba(0,0,0,.25));
+            animation: float 10s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-14px) rotate(6deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .floater.small { width: 22px; }
+        .floater.med { width: 34px; animation-duration: 12s; animation-delay: -2s; }
+        .floater.big { width: 50px; animation-duration: 16s; animation-delay: -4s; }
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+            margin: 4px 0;
+        }
+        .hidden { display: none !important; }
+        /* responsive tweaks */
+        @media (max-width: 420px) {
+            .card { min-height: 420px; }
+            .prompt { font-size: 1.05rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="scene">
+    <!-- Decorative floaters (SVG hearts/stars) -->
+    <svg class="floaters" width="0" height="0" viewBox="0 0 0 0" aria-hidden="true">
+        <defs>
+            <symbol id="heart" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21s-6.716-4.265-9.173-8.226C-0.257 8.93 1.27 4.5 5.2 4.5c2.05 0 3.34 1.08 4.03 2.2.69-1.12 1.98-2.2 4.03-2.2 3.93 0 5.46 4.43 2.373 8.274C18.716 16.735 12 21 12 21z"/>
+            </symbol>
+            <symbol id="spark" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l2.1 5.9L20 10l-5.9 2.1L12 18l-2.1-5.9L4 10l5.9-2.1L12 2z"/>
+            </symbol>
+        </defs>
+    </svg>
+    <div class="floater small" style="left: 8%; top: 18%; color: var(--accent);">
+        <svg viewBox="0 0 24 24"><use href="#heart"/></svg>
+    </div>
+    <div class="floater med" style="left: 82%; top: 22%; color: var(--success);">
+        <svg viewBox="0 0 24 24"><use href="#spark"/></svg>
+    </div>
+    <div class="floater big" style="left: 12%; bottom: 14%; color: var(--accent-2);">
+        <svg viewBox="0 0 24 24"><use href="#heart"/></svg>
+    </div>
+    <div class="floater small" style="right: 8%; bottom: 18%; color: var(--danger);">
+        <svg viewBox="0 0 24 24"><use href="#heart"/></svg>
+    </div>
+
+    <div class="card" role="dialog" aria-labelledby="title" aria-live="polite">
+        <header>
+            <div class="heart-logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" style="color: var(--accent)">
+                    <use href="#heart" />
+                </svg>
+            </div>
+            <div class="title" id="title">love-note ▸ a tiny confession</div>
+        </header>
+
+        <main>
+            <!-- Screen 1: Greet -->
+            <section id="s1" class="screen show">
+                <div class="prompt">hello there... :3</div>
+                <div class="input-row">
+                    <input id="who" class="textbox" placeholder="your name (optional)" autocomplete="off" />
+                    <button id="s1-next" class="btn">Continue</button>
+                </div>
+                <div class="divider"></div>
+                <div class="pill">Tip: press Enter to continue</div>
+            </section>
+
+            <!-- Screen 2: Personalized greeting -->
+            <section id="s2" class="screen">
+                <div class="prompt">
+                    I love you, <span id="person" style="color: var(--accent-2); font-weight: 800;">cutie</span>!
+                </div>
+                <div class="input-row">
+                    <button id="s2-next" class="btn">aww... continue</button>
+                </div>
+            </section>
+
+            <!-- Screen 3: Ask the question -->
+            <section id="s3" class="screen">
+                <div class="prompt">Do you feel the same way by chance...? y/n ^_^</div>
+                <div class="choices">
+                    <button class="choice" data-answer="y">y</button>
+                    <button class="choice" data-answer="yes">yes</button>
+                    <button class="choice" data-answer="affirmative">affirmative</button>
+                    <button class="choice" data-answer="n">n</button>
+                    <button class="choice" data-answer="no">no</button>
+                </div>
+                <div class="input-row">
+                    <input id="free-text" class="textbox" placeholder='type "y" or "n"...' />
+                    <button id="s3-next" class="btn">Submit</button>
+                </div>
+            </section>
+
+            <!-- Screen 4: Result -->
+            <section id="s4" class="screen">
+                <div id="result" class="prompt"></div>
+                <div class="input-row">
+                    <button id="exit" class="btn" style="background: linear-gradient(180deg, var(--success), #43d7b3); box-shadow: 0 8px 24px rgba(67, 215, 179, .35);">Press to exit</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="note">made with hugs and sparkles</div>
+            <div class="status" id="status">awaiting greeting…</div>
+        </footer>
+    </div>
+</div>
+
+<script>
+    const perDefault = "cutie";
+    let perSon = perDefault;
+
+    const s1 = document.getElementById("s1");
+    const s2 = document.getElementById("s2");
+    const s3 = document.getElementById("s3");
+    const s4 = document.getElementById("s4");
+
+    const who = document.getElementById("who");
+    const personSpan = document.getElementById("person");
+    const freeText = document.getElementById("free-text");
+    const statusEl = document.getElementById("status");
+    const resultEl = document.getElementById("result");
+
+    function show(screen) {
+        [s1, s2, s3, s4].forEach(s => s.classList.remove("show"));
+        screen.classList.add("show");
+        // focus best input
+        if (screen === s1) who.focus();
+        if (screen === s3) freeText.focus();
+    }
+
+    function updateStatus(text) { statusEl.textContent = text; }
+
+    // Screen 1
+    document.getElementById("s1-next").addEventListener("click", () => {
+        const name = who.value.trim();
+        perSon = name || perDefault;
+        personSpan.textContent = perSon;
+        show(s2);
+        updateStatus("greeting delivered…");
+    });
+    who.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") document.getElementById("s1-next").click();
+    });
+
+    // Screen 2
+    document.getElementById("s2-next").addEventListener("click", () => {
+        show(s3);
+        updateStatus("awaiting your answer…");
+    });
+
+    // Screen 3 choices
+    document.querySelectorAll(".choice").forEach(btn => {
+        btn.addEventListener("click", () => {
+            handleAnswer(btn.dataset.answer);
+        });
+    });
+    document.getElementById("s3-next").addEventListener("click", () => {
+        handleAnswer(freeText.value.trim().toLowerCase());
+    });
+    freeText.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") document.getElementById("s3-next").click();
+    });
+
+    function handleAnswer(a) {
+        const yesSet = new Set(["yes","y","affirmative"]);
+        const isYes = yesSet.has(a);
+        if (isYes) {
+            resultEl.innerHTML = `You're so sweet, <span style="color: var(--accent-2); font-weight: 800;">${escapeHtml(perSon)}</span> *hugs* &gt;///&lt; &lt;3`;
+            confetti();
+            updateStatus("love reciprocated! ✨");
+        } else {
+            resultEl.textContent = "acknowledged... ._.";
+            updateStatus("noted…");
+        }
+        show(s4);
+    }
+
+    // Exit
+    document.getElementById("exit").addEventListener("click", () => {
+        // Reset the flow (like "Press Enter to exit...")
+        who.value = "";
+        freeText.value = "";
+        perSon = perDefault;
+        personSpan.textContent = perDefault;
+        show(s1);
+        updateStatus("awaiting greeting…");
+    });
+
+    // Minimal confetti without external libs
+    function confetti() {
+        const COUNT = 36;
+        for (let i = 0; i < COUNT; i++) {
+            const piece = document.createElement("div");
+            piece.style.position = "fixed";
+            piece.style.left = (Math.random() * 100) + "vw";
+            piece.style.top = "-10px";
+            piece.style.width = "8px";
+            piece.style.height = "14px";
+            piece.style.background = randomConfettiColor();
+            piece.style.transform = `rotate(${Math.random()*360}deg)`;
+            piece.style.borderRadius = "2px";
+            piece.style.zIndex = 9999;
+            piece.style.pointerEvents = "none";
+            document.body.appendChild(piece);
+
+            const duration = 1200 + Math.random() * 1000;
+            const endX = (Math.random() * 40 - 20);
+            const amplitude = 30 + Math.random() * 30;
+
+            const start = performance.now();
+            (function drop(t0) {
+                const t = (performance.now() - t0) / duration;
+                if (t >= 1) { piece.remove(); return; }
+                const y = t * (window.innerHeight + 40);
+                const x = endX * t + Math.sin(t * 8) * amplitude;
+                piece.style.transform = `translate(${x}px, ${y}px) rotate(${t*720}deg)`;
+                requestAnimationFrame(() => drop(t0));
+            })(start);
+        }
+    }
+    function randomConfettiColor() {
+        const colors = [getCSS("--accent"), getCSS("--accent-2"), getCSS("--success"), "#ffd166", "#9b87fd"];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+    function getCSS(varName) {
+        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    }
+    function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    }
+</script>
+</body>
+</html>
